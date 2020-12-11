@@ -396,12 +396,16 @@ bool radar_pi::DeInit(void) {
     m_navico_locator->Shutdown();
     m_navico_locator->Wait();
   }
+  m_navico_locator->Delete();
+  delete m_navico_locator;
   m_navico_locator = 0;
 
   if (m_raymarine_locator) {
     m_raymarine_locator->Shutdown();
     m_raymarine_locator->Wait();
   }
+  m_raymarine_locator->Delete();
+  delete m_raymarine_locator;
   m_raymarine_locator = 0;
   // Stop processing in all radars.
   // This waits for the receive threads to stop and removes the dialog, so that its settings
@@ -430,11 +434,13 @@ bool radar_pi::DeInit(void) {
   }
 
   if (m_navico_locator != NULL) {
+    m_navico_locator->Delete();
     delete m_navico_locator;
     m_navico_locator = 0;
   }
 
   if (m_raymarine_locator != NULL) {
+    m_raymarine_locator->Delete();
     delete m_raymarine_locator;
     m_raymarine_locator = 0;
   }
@@ -515,13 +521,16 @@ bool radar_pi::MakeRadarSelection() {
       m_navico_locator->Shutdown();
       m_navico_locator->Wait();
     }
+    m_navico_locator->Delete();
+    delete m_navico_locator;
     m_navico_locator = 0;
     LOG_INFO(wxT("radar_pi: Navico locator deleted by MakeRadarSelection"));
-    m_navico_locator = 0;
     if (m_raymarine_locator) {
       m_raymarine_locator->Shutdown();
       m_raymarine_locator->Wait();
     }
+    m_raymarine_locator->Delete();
+    delete m_raymarine_locator;
     m_raymarine_locator = 0;
     LOG_INFO(wxT("radar_pi: Raymarine locator deleted MakeRadarSelection"));
 
