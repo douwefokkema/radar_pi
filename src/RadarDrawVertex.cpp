@@ -54,7 +54,9 @@ bool RadarDrawVertex::Init(size_t spokes, size_t spoke_len_max) {
     }
     return false;
   }
-
+  for (size_t i = 0; i < m_spokes; i++) {
+    m_vertices[i].points = 0;
+  }
   return true;
 }
 
@@ -63,6 +65,7 @@ void RadarDrawVertex::Reset() {
     for (size_t i = 0; i < m_spokes; i++) {
       if (m_vertices[i].points) {
         free(m_vertices[i].points);
+        m_vertices[i].points = 0;
       }
     }
     free(m_vertices);
@@ -128,6 +131,10 @@ void RadarDrawVertex::ProcessRadarSpoke(int transparency, SpokeBearing angle, ui
   int r_end = 0;
 
   if (angle < 0 || angle >= (int)m_spokes || len > m_spoke_len_max || !m_vertices) {
+    return;
+  }
+  if (!m_vertices) {
+    LOG_INFO(wxT("radar_pi: error init vertices"));
     return;
   }
   VertexLine* line = &m_vertices[angle];

@@ -585,6 +585,7 @@ void RadarInfo::UpdateTransmitState() {
     m_boot_state.Update(RADAR_OFF);
     RequestRadarState(RADAR_TRANSMIT);
   }
+  LOG_INFO(wxT("$$$ test00"));
 }
 
 void RadarInfo::RequestRadarState(RadarState state) {
@@ -663,6 +664,7 @@ void RadarInfo::RenderGuardZone() {
 }
 
 void RadarInfo::SetAutoRangeMeters(int autorange_to_set) {
+  LOG_INFO(wxT("$$$ test02"));
   m_previous_auto_range_meters = m_range.GetValue();
   int meters = autorange_to_set;
   LOG_VERBOSE(wxT("radar_pi: Automatic range changed 1 from %d to %d meters"), m_previous_auto_range_meters, meters);

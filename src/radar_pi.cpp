@@ -151,13 +151,14 @@ radar_pi::~radar_pi() {}
  * they can enable/disable multiple times in the overview. Grrr!
  *
  */
-
+static int counter;
 int radar_pi::Init(void) {
   if (m_initialized) {
     // Whoops, shouldn't happen
     return PLUGIN_OPTIONS;
   }
-
+  counter = 0;
+  
   if (m_first_init) {
 #ifdef __WXMSW__
     WSADATA wsaData;
@@ -170,8 +171,9 @@ int radar_pi::Init(void) {
     }
     LOG_TRANSMIT(wxT("radar_pi: Windows sockets initialized"));
 #endif
-
-    AddLocaleCatalog(_T("opencpn-radar_pi"));
+    wxString localcat = wxT("opencpn-radar_pi");
+    LOG_INFO(wxT("$$$ addlocal string= %s"), localcat);
+    AddLocaleCatalog(localcat);
 
     m_pconfig = GetOCPNConfigObject();
     m_first_init = false;
@@ -340,7 +342,7 @@ int radar_pi::Init(void) {
   m_context_menu_arpa = false;
   SetCanvasContextMenuItemViz(m_context_menu_show_id, false);
 
-  LOG_VERBOSE(wxT("radar_pi: Initialized plugin transmit=%d/%d "), m_settings.show_radar[0], m_settings.show_radar[1]);
+  LOG_INFO(wxT("radar_pi: $$$ verboiseInitialized plugin transmit=%d/%d "), m_settings.show_radar[0], m_settings.show_radar[1]);
 
   m_notify_time_ms = 0;
   m_timer = new wxTimer(this, TIMER_ID);
@@ -435,8 +437,14 @@ bool radar_pi::DeInit(void) {
     delete m_raymarine_locator;
     m_raymarine_locator = 0;
   }
-
+  if (m_pMessageBox) {
   delete m_pMessageBox;
+    m_pMessageBox = 0;
+    }
+  if (m_GPS_filter) {
+  delete m_GPS_filter;
+    m_GPS_filter = 0;
+  }
 
   // No need to delete wxWindow stuff, wxWidgets does this for us.
   LOG_VERBOSE(wxT("radar_pi: DeInit of plugin done"));
@@ -612,6 +620,7 @@ void radar_pi::SetRadarWindowViz(bool reparent) {
     m_radar[r]->ShowControlDialog(showThisControl, reparent);
     m_radar[r]->UpdateTransmitState();
   }
+  LOG_INFO(wxT("$$$ test01"));
 }
 
 /**
@@ -1061,11 +1070,13 @@ void radar_pi::TimedControlUpdate() {
   }
 
   //// for overlay testing only, simple trick to get position and heading
-  // wxString nmea;
-  // nmea = wxT("$APHDM,000.0,M*33");
-  // PushNMEABuffer(nmea);
-  // nmea = wxT("$GPRMC,123519,A,5326.038,N,00611.000,E,022.4,,230394,,W,*41<0x0D><0x0A>");
-  // PushNMEABuffer(nmea);
+   wxString nmea;
+  /*if (counter != 0 &&  counter % 3 == 0) {*/
+   nmea = wxT("$APHDM,000.0,M*33");
+   PushNMEABuffer(nmea);
+   nmea = wxT("$GPRMC,123519,A,5326.038,N,00611.000,E,022.4,,230394,,W,*41<0x0D><0x0A>");
+   PushNMEABuffer(nmea);
+   //}
 
   m_notify_time_ms = now;
 
@@ -1252,6 +1263,13 @@ bool radar_pi::RenderGLOverlayMultiCanvas(wxGLContext *pcontext, PlugIn_ViewPort
     LOG_INFO(wxT("error render busy"));
     return true;
   }
+  counter++;
+  if (counter == 50) {
+    //DeInit();  //$$$
+    //Init();
+     counter = 0;
+  }
+  LOG_INFO(wxT("radar_pi:rendering start"));
   m_render_busy = true;
   // update own ship position to best estimate
   ExtendedPosition intermediate_pos;
@@ -1325,12 +1343,12 @@ bool radar_pi::RenderGLOverlayMultiCanvas(wxGLContext *pcontext, PlugIn_ViewPort
     m_cog = m_COGAvg;
     m_vp_rotation = vp->rotation;
   }
-
+  LOG_INFO(wxT("radar_pi: $$$2canvasIndex=%i"), canvasIndex);
   if (M_SETTINGS.show                                                     // Radar shown
       && current_overlay_radar > -1                                       // Overlay desired
       && current_overlay_radar < (int)M_SETTINGS.radar_count              // and still valid
       && m_radar[current_overlay_radar]->GetRadarPosition(&radar_pos)) {  // Boat position known
-
+    LOG_INFO(wxT("radar_pi: $$$23canvasIndex=%i"), canvasIndex);
     GeoPosition pos_min = {vp->lat_min, vp->lon_min};
     GeoPosition pos_max = {vp->lat_max, vp->lon_max};
     double max_distance = radar_distance(pos_min, pos_max, 'm');
@@ -1340,8 +1358,9 @@ bool radar_pi::RenderGLOverlayMultiCanvas(wxGLContext *pcontext, PlugIn_ViewPort
     int auto_range_meters = (int)edge_distance;
     if (auto_range_meters < 50) {
       auto_range_meters = 50;
+      LOG_INFO(wxT("radar_pi: $$$24canvasIndex=%i"), canvasIndex);
     }
-
+    LOG_INFO(wxT("radar_pi: $$$1canvasIndex=%i"), canvasIndex);
     wxPoint boat_center;
     GetCanvasPixLL(vp, &boat_center, radar_pos.lat, radar_pos.lon);
 
@@ -1353,6 +1372,7 @@ bool radar_pi::RenderGLOverlayMultiCanvas(wxGLContext *pcontext, PlugIn_ViewPort
         highest = i;
       }
     }
+    LOG_INFO(wxT("radar_pi: $$$canvasIndex=%i"), canvasIndex);
     if (canvasIndex == highest) {
       m_radar[current_overlay_radar]->SetAutoRangeMeters(auto_range_meters);
     }

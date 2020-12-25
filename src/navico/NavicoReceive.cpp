@@ -419,6 +419,7 @@ SOCKET NavicoReceive::GetNewReportSocket() {
     SetInfoStatus(s);
     wxLogError(wxT("radar_pi: %s Unable to listen to socket: %s"), m_ri->m_name, error.c_str());
   }
+  LOG_INFO(wxT("$$$ return socket;"));
   return socket;
 }
 
